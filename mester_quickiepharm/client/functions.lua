@@ -41,7 +41,7 @@ function DoorScene() --//TODO: Make this full GTA:O style
     local targetX = px + fx * 1.2
     local targetY = py + fy * 1.2
     local targetZ = pz
-    TaskGoStraightToCoord(ped, targetX, targetY, targetZ, 1.0, 1000, GetEntityHeading(ped), 0.0)
+    TaskGoStraightToCoord(ped, targetX, targetY, targetZ, 1.0, 600, GetEntityHeading(ped), 0.0)
     Wait(600)
     DoScreenFadeOut(500)
     local fadeTimeout = GetGameTimer() + 2000
@@ -52,6 +52,5 @@ function DoorScene() --//TODO: Make this full GTA:O style
     Wait(1000)
     FreezeEntityPosition(ped, false)
     ClearPedTasks(ped)
-    DoScreenFadeIn(500)
     doorSceneActive = false
 end

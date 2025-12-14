@@ -44,7 +44,7 @@ Config.DestinationMarkers = { -- Markers for delivery locations
 }
 
 Config.Deliveries = { -- Delviery locations and messages
-    { coords = vec3(0, 0, 0), text = "Here will be the little story thing, the sms from the QuickiePharm about the delivery." },
+    { coords = vec3(0, 0, 0), secondaryCoords = vec3(0, 0, 0), text = "Here will be the little story thing, the sms from the QuickiePharm about the delivery." },
 }
 
 Config.PaymentAndTime = { -- Payment and time per delivery based on distance.
@@ -52,3 +52,5 @@ Config.PaymentAndTime = { -- Payment and time per delivery based on distance.
     [6000] = {payment = 7500, time = 300000}, -- If distance is less than or equal to 6000 units, pay 8000 and give 300 seconds to complete.
     [99999] = {payment = 10000, time = 400000}, -- If distance is less than or equal to 99999 units, pay 10000 and give 400 seconds to complete.
 }
+
+Config.ShouldBringBackVehicle = true -- If true, player must return the vehicle to the starting location to complete the job. If false, vehicle is removed on delivery completion just like in GTA:O

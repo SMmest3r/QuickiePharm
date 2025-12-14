@@ -84,4 +84,5 @@ RegisterNetEvent("mester_quickiepharmStartedJob", function()
             SetVehicleMod(veh, 48, Config.JobVehicle.Livery, false)
         end
     end
+    DoScreenFadeIn(500)
 end)
