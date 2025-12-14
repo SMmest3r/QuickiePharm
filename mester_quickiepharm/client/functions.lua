@@ -53,4 +53,7 @@ function DoorScene() --//TODO: Make this full GTA:O style
     FreezeEntityPosition(ped, false)
     ClearPedTasks(ped)
     doorSceneActive = false
+    Citizen.SetTimeout(5000, function()
+        DoScreenFadeIn(500)
+    end)
 end
