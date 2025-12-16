@@ -78,6 +78,10 @@ RegisterNetEvent("mester_quickiepharmStartedJob", function()
 
     -- If we have a valid vehicle, set the livery if configured
     if veh and veh > 0 then
+        if Config.JobVehicle.Color then
+            DebugPrint("Setting job vehicle colors to primary: " .. Config.JobVehicle.Color.primary .. ", secondary: " .. Config.JobVehicle.Color.secondary)
+            SetVehicleColours(veh, Config.JobVehicle.Color.primary, Config.JobVehicle.Color.secondary)
+        end
         if Config.JobVehicle.Livery then
             DebugPrint("Setting job vehicle livery to " .. Config.JobVehicle.Livery)
             SetVehicleModKit(veh, 0)
