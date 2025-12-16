@@ -122,7 +122,8 @@ RegisterNetEvent("mester_quickiepharmStartedJob", function(vehicle, props)
                             DeleteEntity(propEntity)
                         end
                     end
-                    break
+                    TriggerServerEvent("mester_quickiepharmEndedJob", false)
+                    return
                 end
             end
             if not IsVehicleDriveable(veh, true) then
@@ -139,7 +140,8 @@ RegisterNetEvent("mester_quickiepharmStartedJob", function(vehicle, props)
                     DebugPrint("Deleting undriveable job vehicle.")
                     DeleteEntity(veh)
                 end
-                break
+                TriggerServerEvent("mester_quickiepharmEndedJob", not Config.JobVehicle.DeleteWhenUndriveable)
+                return
             end
         end
     end)

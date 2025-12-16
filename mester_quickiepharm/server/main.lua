@@ -95,3 +95,26 @@ AddEventHandler("onResourceStop", function(resourceName)
         end
     end
 end)
+
+RegisterNetEvent("mester_quickiepharmEndedJob", function(doesVehicleExist)
+    local player = source
+    if not players[player] then
+        ErrPrint("Player " .. player .. " tried to end a job but had no active job.")
+        return
+    end
+    if players[player].props then
+        players[player].props = nil
+    end
+    if not Config.ShouldBringBackVehicle and doesVehicleExist then
+        local veh = NetworkGetEntityFromNetworkId(players[player].vehicle)
+        if DoesEntityExist(veh) then
+            DebugPrint("Removing job vehicle for player " .. player .. " because job ended.")
+            DeleteEntity(veh)
+            players[player].vehicle = nil
+        end
+    end
+    if not players[player].vehicle then
+        DebugPrint("Job ended and no job vehicle to bring back for player " .. player .. ", clearing job data.")
+        players[player] = nil
+    end
+end)
