@@ -48,7 +48,14 @@ RegisterNetEvent("mester_quickiepharmStartJob", function()
         TriggerClientEvent("mester_quickiepharmNotify", player, Locales.FailedToCreateVehicle)
         return
     end
-    TriggerClientEvent("mester_quickiepharmStartedJob", player)
+    players[player].props = {}
+    for i = 1, 6 do
+        local propObject = CreateObjectNoOffset(GetHashKey(Config.JobProp), chosenSpawnPoint.x, chosenSpawnPoint.y, chosenSpawnPoint.z, true, true, true)
+        local netID = NetworkGetNetworkIdFromEntity(propObject)
+        table.insert(players[player].props, netID)
+        DebugPrint("Created prop object with Net ID " .. netID .. " for job prop " .. Config.JobProp)
+    end
+    TriggerClientEvent("mester_quickiepharmStartedJob", player, players[player].vehicle, players[player].props)
 end)
 
 AddEventHandler("playerDropped", function(reason)
@@ -73,6 +80,15 @@ AddEventHandler("onResourceStop", function(resourceName)
                 if DoesEntityExist(veh) then
                     DebugPrint("Resource stopping, removing job vehicle for player " .. player)
                     DeleteEntity(veh)
+                end
+            end
+            if data.props then
+                for _, netID in pairs(data.props) do
+                    local propEntity = NetworkGetEntityFromNetworkId(netID)
+                    if DoesEntityExist(propEntity) then
+                        DebugPrint("Resource stopping, removing job prop with Net ID " .. netID .. " for player " .. player)
+                        DeleteEntity(propEntity)
+                    end
                 end
             end
             players[player] = nil

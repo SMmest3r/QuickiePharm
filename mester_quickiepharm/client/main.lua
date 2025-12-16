@@ -64,7 +64,7 @@ RegisterNetEvent("mester_quickiepharmNotify", function(msg)
     Notify(msg)
 end)
 
-RegisterNetEvent("mester_quickiepharmStartedJob", function()
+RegisterNetEvent("mester_quickiepharmStartedJob", function(vehicle, props)
     local ped = PlayerPedId()
     local veh = GetVehiclePedIsIn(ped, false)
     local tries = 0
@@ -87,6 +87,60 @@ RegisterNetEvent("mester_quickiepharmStartedJob", function()
             SetVehicleModKit(veh, 0)
             SetVehicleMod(veh, 48, Config.JobVehicle.Livery, false)
         end
+        DebugPrint("Spawning job props in the vehicle's backseats.")
+        for k, v in pairs(props) do
+            local propEntity = NetworkGetEntityFromNetworkId(v)
+            if DoesEntityExist(propEntity) then
+                DebugPrint("Attaching prop with Net ID " .. v .. " to job vehicle.")
+                AttachEntityToEntity(propEntity, veh, GetEntityBoneIndexByName(veh, "seat_pside_r"), 0.3 - (k * 0.1), 0.0, 0.5, 0.0, 0.0, 90.0, true, true, false, true, 1, true)
+            else
+                ErrPrint("Failed to find prop entity with Net ID " .. v .. " for attachment.")
+            end
+        end
+        if Config.JobVehicle.SetDirtLevel then
+            SetVehicleDirtLevel(veh, 0.0)
+        end
     end
     DoScreenFadeIn(500)
+    Citizen.CreateThread(function()
+        local netId = vehicle
+        local veh = NetworkGetEntityFromNetworkId(netId)
+        while inJob do
+            Citizen.Wait(500)
+            local ped = PlayerPedId()
+            if not DoesEntityExist(veh) then
+                if NetworkDoesNetworkIdExist(netId) then
+                    veh = NetworkGetEntityFromNetworkId(netId)
+                end
+                if not DoesEntityExist(veh) then
+                    DebugPrint("Job vehicle no longer exists, ending job.")
+                    inJob = false
+                    for k, v in pairs(props) do
+                        local propEntity = NetworkGetEntityFromNetworkId(v)
+                        if DoesEntityExist(propEntity) then
+                            DebugPrint("Removing job prop with Net ID " .. v)
+                            DeleteEntity(propEntity)
+                        end
+                    end
+                    break
+                end
+            end
+            if not IsVehicleDriveable(veh, true) then
+                DebugPrint("Job vehicle is no longer driveable, ending job.")
+                inJob = false
+                for k, v in pairs(props) do
+                    local propEntity = NetworkGetEntityFromNetworkId(v)
+                    if DoesEntityExist(propEntity) then
+                        DebugPrint("Removing job prop with Net ID " .. v)
+                        DeleteEntity(propEntity)
+                    end
+                end
+                if Config.JobVehicle.DeleteWhenUndriveable then
+                    DebugPrint("Deleting undriveable job vehicle.")
+                    DeleteEntity(veh)
+                end
+                break
+            end
+        end
+    end)
 end)

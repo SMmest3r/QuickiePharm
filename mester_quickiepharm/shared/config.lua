@@ -32,7 +32,7 @@ Config.BlipData = { -- The job's icon on the map
 }
 
 --@type string
-Config.JobWeapon = "WEAPON_BRIEFCASE_03" -- Weapon given to the player for carrying the medical supplies and can be seen in the vehicle's backseats.
+Config.JobProp = "w_am_weaponcasem51" -- Prop used to simulate carrying the delivery items, also can be seen in the job vehicle's backseats
 
 --@type table
 Config.JobVehicle = { -- Vehicle used for the job
@@ -44,6 +44,10 @@ Config.JobVehicle = { -- Vehicle used for the job
     Livery = 10, -- Vehicle livery (paint job). false to ignore
     --@type string
     Plate = "  PH4RM", -- Vehicle plate text
+    --@type boolean
+    SetDirtLevel = true, -- If true, vehicle's dirt level is set to 0 on spawn'
+    --@type boolean
+    DeleteWhenUndriveable = true, -- If true, vehicle is deleted when vehicle becomes undriveable
     --@type table
     SpawnPoints = { -- Possible vehicle spawnpoints
         --@type vector4
