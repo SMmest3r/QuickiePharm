@@ -32,7 +32,10 @@ Config.BlipData = { -- The job's icon on the map
 }
 
 --@type string
-Config.JobProp = "w_am_weaponcasem51" -- Prop used to simulate carrying the delivery items, also can be seen in the job vehicle's backseats
+Config.JobProp = "w_am_weaponcasem51" -- Prop used to simulate the delivery items in the job vehicle's backseats
+
+--@type striing
+Config.JobWeapon = "WEAPON_BRIEFCASE_03" -- Weapon used to simulate carrying the delivery items
 
 --@type table
 Config.JobVehicle = { -- Vehicle used for the job

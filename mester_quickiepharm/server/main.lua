@@ -49,7 +49,7 @@ RegisterNetEvent("mester_quickiepharmStartJob", function()
         return
     end
     players[player].props = {}
-    for i = 1, 6 do
+    for i = 1, Config.RoutePerJob do
         local propObject = CreateObjectNoOffset(GetHashKey(Config.JobProp), chosenSpawnPoint.x, chosenSpawnPoint.y, chosenSpawnPoint.z, true, true, true)
         local netID = NetworkGetNetworkIdFromEntity(propObject)
         table.insert(players[player].props, netID)

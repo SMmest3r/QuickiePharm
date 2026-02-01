@@ -7,6 +7,7 @@ end
 
 local inJob = false
 local inStartJobMarker = false
+local props = {}
 
 -- Create the blip on the map
 Citizen.CreateThread(function()
@@ -68,6 +69,7 @@ RegisterNetEvent("mester_quickiepharmStartedJob", function(vehicle, props)
     local ped = PlayerPedId()
     local veh = GetVehiclePedIsIn(ped, false)
     local tries = 0
+    props = props
 
     -- Wait for the vehicle to be valid
     while (not veh or veh <= 0) and tries < 50 do
@@ -178,6 +180,7 @@ RegisterNetEvent("mester_quickiepharmStartedJob", function(vehicle, props)
             else
                 -- Job complete
                 completeJob(totalDeliveries, totalEarned)
+                props = {}
             end
             return
         end
@@ -236,6 +239,23 @@ RegisterNetEvent("mester_quickiepharmStartedJob", function(vehicle, props)
                         
                         if distToVehicleMarker < 3.0 then
                             inMarker = true
+
+                            -- Leave vehicle and give weapon to simulate carrying the delivery
+                            TaskLeaveVehicle(ped, veh, 0)
+                            GiveWeaponToPed(ped, GetHashKey(Config.JobWeapon), 1, false, true)
+
+                            -- Remove one of the prop from the backseats
+                            if #props > 0 then
+                                local propNetId = props[1]
+                                local propEntity = NetworkGetEntityFromNetworkId(propNetId)
+                                if DoesEntityExist(propEntity) then
+                                    DebugPrint("Removing one job prop with Net ID " .. propNetId .. " after delivery pickup.")
+                                    DetachEntity(propEntity, true, true)
+                                    DeleteEntity(propEntity)
+                                end
+                                table.remove(props, 1)
+                            end
+
                         else
                             inMarker = false
                         end
@@ -255,6 +275,12 @@ RegisterNetEvent("mester_quickiepharmStartedJob", function(vehicle, props)
                         if distToSecondaryMarker < 1.5 then
                             ShowHelp(string.format(Locales.Task2, delivery.label))
                             inSecondaryMarker = true
+                            
+                            -- Remove weapon after delivery
+                            DoorScene()
+                            RemoveWeaponFromPed(ped, GetHashKey(Config.JobWeapon))
+                            Citizen.Wait(500)
+                            DoScreenFadeIn(500)
                         else
                             inSecondaryMarker = false
                         end
