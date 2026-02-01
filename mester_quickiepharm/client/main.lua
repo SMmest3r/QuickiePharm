@@ -70,25 +70,33 @@ RegisterNetEvent("mester_quickiepharmStartedJob", function(vehicle, props)
     local tries = 0
 
     -- Wait for the vehicle to be valid
-    while not veh or veh <= 0 or tries > 50 do
+    while (not veh or veh <= 0) and tries < 50 do
         Citizen.Wait(100)
         veh = GetVehiclePedIsIn(ped, false)
         tries = tries + 1
     end
 
-    -- If we have a valid vehicle, set the livery if configured
     if veh and veh > 0 then
         if Config.JobVehicle.Color then
             DebugPrint("Setting job vehicle colors to primary: " .. Config.JobVehicle.Color.primary .. ", secondary: " .. Config.JobVehicle.Color.secondary)
             SetVehicleColours(veh, Config.JobVehicle.Color.primary, Config.JobVehicle.Color.secondary)
         end
+
+        -- Set livery if configured
         if Config.JobVehicle.Livery then
             DebugPrint("Setting job vehicle livery to " .. Config.JobVehicle.Livery)
             SetVehicleModKit(veh, 0)
             SetVehicleMod(veh, 48, Config.JobVehicle.Livery, false)
         end
+
+        -- Attach props to the vehicle if server spawned them and provided their Net IDs correctly
         DebugPrint("Spawning job props in the vehicle's backseats.")
         for k, v in pairs(props) do
+            local tries = 0
+            while not NetworkDoesNetworkIdExist(v) and tries < 50 do
+                Citizen.Wait(100)
+                tries = tries + 1
+            end
             local propEntity = NetworkGetEntityFromNetworkId(v)
             if DoesEntityExist(propEntity) then
                 DebugPrint("Attaching prop with Net ID " .. v .. " to job vehicle.")
@@ -97,11 +105,16 @@ RegisterNetEvent("mester_quickiepharmStartedJob", function(vehicle, props)
                 ErrPrint("Failed to find prop entity with Net ID " .. v .. " for attachment.")
             end
         end
+
+        -- Set dirt level to 0 if configured
         if Config.JobVehicle.SetDirtLevel then
             SetVehicleDirtLevel(veh, 0.0)
         end
     end
+
     DoScreenFadeIn(500)
+
+    -- Monitor the job vehicle's presence and driveability
     Citizen.CreateThread(function()
         local netId = vehicle
         local veh = NetworkGetEntityFromNetworkId(netId)
@@ -121,6 +134,7 @@ RegisterNetEvent("mester_quickiepharmStartedJob", function(vehicle, props)
                             DebugPrint("Removing job prop with Net ID " .. v)
                             DeleteEntity(propEntity)
                         end
+                        Citizen.Wait(0)
                     end
                     TriggerServerEvent("mester_quickiepharmEndedJob", false)
                     return
@@ -135,6 +149,7 @@ RegisterNetEvent("mester_quickiepharmStartedJob", function(vehicle, props)
                         DebugPrint("Removing job prop with Net ID " .. v)
                         DeleteEntity(propEntity)
                     end
+                    Citizen.Wait(0)
                 end
                 if Config.JobVehicle.DeleteWhenUndriveable then
                     DebugPrint("Deleting undriveable job vehicle.")
@@ -145,4 +160,142 @@ RegisterNetEvent("mester_quickiepharmStartedJob", function(vehicle, props)
             end
         end
     end)
+
+    local routes = selectRoutes(Config.RoutePerJob)
+    local currentDelivery = 1
+    local totalDeliveries = #routes
+    local totalEarned = 0
+    local currentPayment = 0
+    
+    Notify(Locales.FragileWarning)
+    Citizen.Wait(3000)
+    
+    local function nextDelivery()
+        if currentDelivery > totalDeliveries then
+            if Config.ShouldBringBackVehicle then
+                -- Need to return vehicle
+                showReturnVehicleTask(totalDelivered, totalEarned)
+            else
+                -- Job complete
+                completeJob(totalDeliveries, totalEarned)
+            end
+            return
+        end
+        
+        local delivery = routes[currentDelivery]
+        local ped = PlayerPedId()
+        local pedPos = GetEntityCoords(ped)
+        local distance = #(pedPos - delivery.coords)
+        
+        -- Calculate payment and time based on distance
+        local paymentData = getPaymentForDistance(distance)
+        if not paymentData then
+            ErrPrint("No payment data found for distance " .. distance .. ", ending job.")
+            inJob = false
+            TriggerServerEvent("mester_quickiepharmEndedJob", true)
+            return
+        end
+        currentPayment = paymentData.payment
+        local timeLimit = paymentData.time
+        
+        -- Show mission text
+        showMissionText(currentDelivery, totalDeliveries, delivery.label, delivery.category)
+        
+        -- Create blip for destination
+        local blip = AddBlipForCoord(delivery.coords.x, delivery.coords.y, delivery.coords.z)
+        SetBlipSprite(blip, Config.JobVehicle.Blip.Sprite)
+        SetBlipDisplay(blip, Config.JobVehicle.Blip.Display)
+        SetBlipScale(blip, Config.JobVehicle.Blip.Scale)
+        SetBlipColour(blip, Config.JobVehicle.Blip.Color)
+        SetBlipAsShortRange(blip, false)
+        SetBlipRoute(blip, true)
+        SetBlipRouteColour(blip, Config.JobVehicle.Blip.Color)
+        BeginTextCommandSetBlipName("STRING")
+        AddTextComponentString(delivery.label)
+        EndTextCommandSetBlipName(blip)
+        
+        -- Monitor delivery
+        local delivered = false
+        local inMarker = false
+        local inSecondaryMarker = false
+        
+        Citizen.CreateThread(function()
+            local wait = 500
+            while not delivered and inJob do
+                local ped = PlayerPedId()
+                local pos = GetEntityCoords(ped)
+                local veh = GetVehiclePedIsIn(ped, false)
+                
+                -- Check marker
+                if veh and veh > 0 then
+                    local distToVehicleMarker = #(pos - delivery.coords)
+                    if distToVehicleMarker < Config.DestinationMarkers.DrawDistance then
+                        wait = 0
+                        local markerScale = Config.DestinationMarkers.Scale * Config.VehicleDestinationMarkerMultiplier
+                        DrawMarker(Config.DestinationMarkers.Type, delivery.coords.x, delivery.coords.y, delivery.coords.z - 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, markerScale.x, markerScale.y, markerScale.z, Config.DestinationMarkers.Color.r, Config.DestinationMarkers.Color.g, Config.DestinationMarkers.Color.b, Config.DestinationMarkers.Color.a, false, true, 2, nil, nil, false)
+                        
+                        if distToVehicleMarker < 3.0 then
+                            inMarker = true
+                        else
+                            inMarker = false
+                        end
+                    else
+                        wait = 500
+                        inMarker = false
+                    end
+                else
+                    inMarker = false
+                    
+                    -- Check secondary marker
+                    local distToSecondaryMarker = #(pos - delivery.secondaryCoords)
+                    if distToSecondaryMarker < Config.DestinationMarkers.DrawDistance then
+                        wait = 0
+                        DrawMarker(Config.DestinationMarkers.Type, delivery.secondaryCoords.x, delivery.secondaryCoords.y, delivery.secondaryCoords.z - 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Config.DestinationMarkers.Scale.x, Config.DestinationMarkers.Scale.y, Config.DestinationMarkers.Scale.z, Config.DestinationMarkers.Color.r, Config.DestinationMarkers.Color.g, Config.DestinationMarkers.Color.b, Config.DestinationMarkers.Color.a, false, true, 2, nil, nil, false)
+                        
+                        if distToSecondaryMarker < 1.5 then
+                            ShowHelp(string.format(Locales.Task2, delivery.label))
+                            inSecondaryMarker = true
+                        else
+                            inSecondaryMarker = false
+                        end
+                    else
+                        wait = 500
+                        inSecondaryMarker = false
+                    end
+                end
+                if inMarker then
+                    RemoveBlip(blip)
+                    blip = AddBlipForCoord(delivery.secondaryCoords.x, delivery.secondaryCoords.y, delivery.secondaryCoords.z)
+                    SetBlipSprite(blip, 1)
+                    SetBlipDisplay(blip, Config.JobVehicle.Blip.Display)
+                    SetBlipScale(blip, Config.JobVehicle.Blip.Scale)
+                    SetBlipColour(blip, 5)
+                    SetBlipAsShortRange(blip, false)
+                    SetBlipRoute(blip, true)
+                    SetBlipRouteColour(blip, 5)
+                    BeginTextCommandSetBlipName("STRING")
+                    AddTextComponentString(delivery.label)
+                    EndTextCommandSetBlipName(blip)
+                    inMarker = false
+                    wait = 500
+                end
+                
+                if inSecondaryMarker then
+                    -- Delivery complete
+                    delivered = true
+                    RemoveBlip(blip)
+                    totalEarned = totalEarned + currentPayment
+                    TriggerServerEvent("mester_quickiepharmDeliveryComplete", currentPayment)
+                    Notify(string.format(Locales.CurrentData, currentDelivery, currentPayment, totalEarned))
+                    currentDelivery = currentDelivery + 1
+                    Citizen.Wait(2000)
+                    nextDelivery()
+                    return
+                end
+                
+                Citizen.Wait(wait)
+            end
+        end)
+    end
+    nextDelivery()
 end)

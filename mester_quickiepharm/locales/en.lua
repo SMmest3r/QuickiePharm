@@ -14,7 +14,7 @@ Locales.Task2 = "Enter the ~b~%s."
 Locales.Task3 = "Return the vehicle to ~b~QuickiePharm."
 Locales.MissionTextHospital1 = 
 "Love Fist's new kazooist lost his breath right before the 5th reunion tour and only our special inhalers can get those decrepit lungs open again. Get to %s. His death may be overdue, but our payment won't be."
-Locales.MissionTexHospital2 =
+Locales.MissionTextHospital2 =
 "%s have failed to diagnose Donna the hair sylist's heightened aggression for what it really is: withdrawal. Get some heavy-duty equine tranquilizers to her stat."
 Locales.MissionTextArcade1 = "Some kis is aiming for a new high score on Wizard's Ruin over at the %s. Go give him the help he needs."
 Locales.HalfwayThereMissionText = 

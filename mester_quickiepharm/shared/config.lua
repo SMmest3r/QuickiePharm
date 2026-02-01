@@ -18,7 +18,7 @@ Config.RoutePerJob = 6 -- Number of deliveries per job
 --@type table
 Config.BlipData = { -- The job's icon on the map
     --@type integer
-    Sprite = 51, -- https://docs.fivem.net/docs/game-references/blips/
+    Sprite = 940, -- https://docs.fivem.net/docs/game-references/blips/
     --@type integer
     Color = 26, -- https://docs.fivem.net/docs/game-references/blips/#blip-colors
     --@type float
@@ -103,15 +103,15 @@ Config.Deliveries = { -- Delviery locations and messages
     ["hospitals"] = {
         --@type table
         { coords = vec3(362.4255, -590.9781, 28.6715), secondaryCoords = vec3(359.9487, -584.9711, 28.8197), label = "Pillbox Medical Center" },
-        { coords = vec3(0, 0, 0), secondaryCoords = vec3(0, 0, 0), label = "Sandy Shores Medical Center" },
+        -- { coords = vec3(0, 0, 0), secondaryCoords = vec3(0, 0, 0), label = "Sandy Shores Medical Center" },
     },
     ["airports"] = {
         --@type table
-        { coords = vec3(0, 0, 0), secondaryCoords = vec3(0, 0, 0), label = "LSIA" },
+        -- { coords = vec3(0, 0, 0), secondaryCoords = vec3(0, 0, 0), label = "LSIA" },
     },
     ["arcades"] = {
         --@type table
-        { coords = vec3(0, 0, 0), secondaryCoords = vec3(0, 0, 0), label = "Wonderama Arcade" },
+        -- { coords = vec3(0, 0, 0), secondaryCoords = vec3(0, 0, 0), label = "Wonderama Arcade" },
     },
 }
 
